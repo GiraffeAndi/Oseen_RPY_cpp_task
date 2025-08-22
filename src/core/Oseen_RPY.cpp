@@ -1,5 +1,11 @@
 #include "Oseen_RPY.hpp"
 
+#include "random.hpp"
+
+#include "BoxGeometry.hpp"
+
+#include <utils/Vector.hpp>
+
 void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij){
 
     int N = data.positions.size();
@@ -72,18 +78,22 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         
         for(int j = i + 1; j < N; j++){
 
-            RXIJ = RXI[i] - RXI[j];
+            Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
+            
+            Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
 
-            RYIJ = RYI[i] - RYI[j];
+            //not correct like this
+            //we need the system information passed through the python interface
+            //not sure where I can find it           
+            BoxGeometry box (So, me, thing);
+            
+            Vector3d sys_dist = box.get_mi_vector(pos1, pos2);
 
-            RZIJ = RZI[i] -RZI[j];
+            RXIJ = sys_dist.x;
 
-            //for reduced coordinates
-            RXIJ -= std::round(RXIJ);
+            RYIJ = sys_dist.y;
 
-            RYIJ -= std::round(RYIJ);
-
-            RZIJ -= std::round(RZIJ);
+            RZIJ = sys_dist.z;
             
             RIJSQ = RXIJ * RXIJ + RYIJ * RYIJ + RZIJ * RZIJ;
 
@@ -92,6 +102,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             RIJ = std::sqrt(RIJSQ);
 
             //maybe check for 1/0 case?
+            //not a priority rn
             RRIJSQ = 1.0/RIJSQ;
 
             OIJ = consij/RIJ;
