@@ -171,6 +171,7 @@ private:
   using GammaType = Thermostat::GammaType;
 
 public:
+
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
