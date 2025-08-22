@@ -62,6 +62,19 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     };
 
+	//dummy values as placeholder until we know how to use the values from
+    //system.box_length ...
+    double So = 1.0
+     
+    double me = 2.0
+
+    double thing = 3.0
+
+    //not correct like this
+    //we need the system information passed through the python interface
+    //not sure where I can find it           
+    BoxGeometry box (So, me, thing);
+
 
 
     for(int i = 0; i < N; i++){
@@ -81,11 +94,6 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
             
             Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
-
-            //not correct like this
-            //we need the system information passed through the python interface
-            //not sure where I can find it           
-            BoxGeometry box (So, me, thing);
             
             Vector3d sys_dist = box.get_mi_vector(pos1, pos2);
 
