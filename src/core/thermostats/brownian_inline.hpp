@@ -29,9 +29,86 @@
 #include "rotation.hpp"
 #include "thermostat.hpp"
 
+#include "Oseen_RPY.hpp"
+
+// Oseen_RPY.cpp not in the same folder will it compile like this?
+
 #include <utils/Vector.hpp>
 
 #include <cmath>
+
+void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma, Thermostat::GammaType const &brownian_gamma){
+
+#ifdef Oseen_RPY
+
+    Data_task data;
+
+    data.pot_energ = 0.0;
+
+    data.virial = 0.0;
+
+	//not sure about this, can be changed
+    data.dt = time_step;
+
+    //chosen with help from LJ potential in User guide.
+    double rcut = std::pow(2.0, 1.0/6.0) * sigma;
+
+    //not sure if correct
+
+    double consij = (3.0 * kT) / (8.0 * sigma * brownian_gamma);
+
+    double consii = kT / brownian_gamma;
+
+    //consii and consij have to be defined still
+
+    int N = particles.size();
+
+    //Temperature in units of kT
+    double temp = kT;
+
+
+    //resize to avoid errors
+
+    data.positions.resize(N, std::vector<double>(3, 0.0));
+
+    data.forces.resize(N, std::vector<double>(3, 0.0));
+
+    data.diffusion_tensor.resize(3*N, std::vector<double>(3*N, 0.0));
+
+    data.CRND.resize(3 * N, 0.0);
+
+
+    for(int i=0; i < N; i++){
+
+        //x-coordinates
+        data.positions[i][0] = particles[i].pos()[0];
+        
+        //y-coordinates
+        data.positions[i][1] = particles[i].pos()[1];
+
+        //z-coordinates
+        data.positions[i][2] = particles[i].pos()[2];
+    }
+    
+    calc_forces(data, sigma, rcut, consii, consij);
+
+    covar(data, time_step);
+
+    move(data, time_step, temp);
+
+    for(int i = 0; i < N; i++){
+                    particles[i].pos()[0] = data.positions[i][0];
+
+                    particles[i].pos()[1] = data.positions[i][1];
+
+                    particles[i].pos()[2] = data.positions[i][2];
+
+                };
+#endif
+}
+
+              
+
 
 /** Determine position: viscous drag driven by conservative forces.
  *  From eq. (14.39) in @cite schlick10a.
@@ -86,6 +163,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   }
   return position;
 }
+
 
 /** Set the terminal velocity driven by the conservative forces drag.
  *  From eq. (14.34) in @cite schlick10a.
