@@ -2,9 +2,11 @@
 
 #include "random.hpp"
 
-#include "BoxGeometry.hpp"
+#include "grid.hpp"
 
-#include <utils/Vector.hpp>
+#include <vector>
+
+#include <cmath>
 
 void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij){
 
@@ -54,30 +56,20 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
         data.forces[k][2] = 0.0; 
 
-        RXI[k] = data.positions[k][0];
-
-        RYI[k] = data.positions[k][1];
-
-        RZI[k] = data.positions[k][2];
-
     };
 
-	//dummy values as placeholder until we know how to use the values from
-    //system.box_length ...
-    double So = 1.0
-     
-    double me = 2.0
-
-    double thing = 3.0
-
-    //not correct like this
-    //we need the system information passed through the python interface
-    //not sure where I can find it           
-    BoxGeometry box (So, me, thing);
+    //called by the python wrapper
+    //see grid.hpp file
+    extern BoxGeometry box_geo;
 
 
+    for(int i = 0; i < N - 1; i++){
 
-    for(int i = 0; i < N; i++){
+        RXI[i] = data.positions[i][0];
+
+        RYI[i] = data.positions[i][1];
+
+        RZI[i] = data.positions[i][2];
 
         //all the same because we zeroed them before
         FXI = data.forces[i][0];
@@ -91,11 +83,11 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         
         for(int j = i + 1; j < N; j++){
 
-            Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
+            utils::Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
             
-            Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
+            utils::Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
             
-            Vector3d sys_dist = box.get_mi_vector(pos1, pos2);
+            utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
 
             RXIJ = sys_dist.x;
 
@@ -191,6 +183,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
         data.forces[p][2] *= 48.0;
 
+        //counter again has to be adjusted
         IC = 3 * p;
 
         data.diffusion_tensor[IC][IC] = consii;
@@ -277,7 +270,7 @@ void covar(Data_task& data, double dt){
 
         double sum = 0.0;
 
-        for(int w = 0; w < f; w++){
+        for(int w = 0; w <= f; w++){
 
             sum += L[f][w] * XI[w];
         }
