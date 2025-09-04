@@ -10,7 +10,7 @@
 
 void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij){
 
-    int N = data.positions.size();
+    const int N = data.positions.size();
 
     std::vector<double> RXI(N, 0.0);
 
@@ -38,14 +38,17 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
     
     int IC, JC;
     
-    double rcutsq = rcut * rcut;
+    const double rcutsq = rcut * rcut;
 
     double SR2, SR6, VIJ, WIJ;
 
     //has to be adjusted formula is totally different to fortran code
-    double sigmacub12 = (sigma * sigma *sigma)/12;
+    const double sigmacub12 = (sigma * sigma *sigma)/12;
 
-    double SIGSQ = sigma * sigma;
+    const double SIGSQ = sigma * sigma;
+
+    //increases readability later
+    auto &d = data.diffusion_tensor;
 
     //setting initial forces to zero
     for(int k = 0; k < N; k++){
@@ -57,11 +60,6 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         data.forces[k][2] = 0.0; 
 
     };
-
-    //called by the python wrapper
-    //see grid.hpp file
-    extern BoxGeometry box_geo;
-
 
     for(int i = 0; i < N - 1; i++){
 
@@ -79,15 +77,16 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         FZI = data.forces[i][2];
 
         //the counter has to be adjusted 
-        IC = 3 * i;
+        const IC = 3 * i;
         
         for(int j = i + 1; j < N; j++){
 
-            utils::Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
+            Utils::Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
             
-            utils::Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
+            Utils::Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
             
-            utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
+            //see grid.hpp file for box_geo
+            Utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
 
             RXIJ = sys_dist.x;
 
@@ -97,7 +96,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             
             RIJSQ = RXIJ * RXIJ + RYIJ * RYIJ + RZIJ * RZIJ;
 
-            JC = 3 * j;
+            const JC = 3 * j;
 
             RIJ = std::sqrt(RIJSQ);
 
@@ -109,21 +108,32 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
             RPIJ = OIJ * sigmacub12 * RRIJSQ;
 
-            data.diffusion_tensor[IC][JC] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RXIJ * RXIJ * RRIJSQ;
+            //making the tensor symmetric in one loop
+            //avoiding extra loop at the end
 
-            data.diffusion_tensor[IC+1][JC+1] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RYIJ * RYIJ * RRIJSQ;
+            d[IC][JC] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RXIJ * RXIJ * RRIJSQ;
 
-            data.diffusion_tensor[IC+2][JC+2] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RZIJ * RZIJ * RRIJSQ;
+            d[JC][IC] = d[IC][JC];
 
-            data.diffusion_tensor[IC][JC+1] = (OIJ - 3.0 * RPIJ) * RXIJ * RYIJ * RRIJSQ;
+            d[IC+1][JC+1] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RYIJ * RYIJ * RRIJSQ;
 
-            data.diffusion_tensor[IC][JC+2] = (OIJ - 3.0 * RPIJ) * RXIJ * RZIJ * RRIJSQ;
+            d[JC+1][IC+1] = d[IC+1][JC+1];
 
-            data.diffusion_tensor[IC+1][JC+2] = (OIJ - 3.0 * RPIJ) * RYIJ * RZIJ * RRIJSQ;
+            d[IC+2][JC+2] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RZIJ * RZIJ * RRIJSQ;
 
-            data.diffusion_tensor[IC+1][JC] = data.diffusion_tensor[IC][JC+1];
+            d[JC+2][IC+2] = d[IC+2][JC+2];
 
-            data.diffusion_tensor[IC+2][JC] = data.diffusion_tensor[IC][JC+2];
+            d[IC][JC+1] = (OIJ - 3.0 * RPIJ) * RXIJ * RYIJ * RRIJSQ;
+
+            d[JC+1][IC] = d[IC][JC+1];
+
+            d[IC][JC+2] = (OIJ - 3.0 * RPIJ) * RXIJ * RZIJ * RRIJSQ;
+
+            d[JC+2][IC] = d[IC][JC+2];
+
+            d[IC+1][JC+2] = (OIJ - 3.0 * RPIJ) * RYIJ * RZIJ * RRIJSQ;
+
+            d[JC+2][IC+1] = d[IC+1][JC+2];
 
             if(RIJSQ < rcutsq){
 
@@ -169,6 +179,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
         data.forces[i][2] = FZI;
         
+        
     };
 
     data.pot_energ *= 4.0;
@@ -184,34 +195,30 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         data.forces[p][2] *= 48.0;
 
         //counter again has to be adjusted
-        IC = 3 * p;
+        const IC = 3 * p;
 
-        data.diffusion_tensor[IC][IC] = consii;
+        d[IC][IC] = consii;
 
-        data.diffusion_tensor[IC+1][IC+1] = consii;
+        d[IC+1][IC+1] = consii;
 
-        data.diffusion_tensor[IC+2][IC+2] = consii;
+        d[IC+2][IC+2] = consii;
 
-        data.diffusion_tensor[IC][IC+1] = 0.0;
+        d[IC][IC+1] = 0.0; 
 
-        data.diffusion_tensor[IC][IC+2] = 0.0;
+        d[IC+1][IC] = d[IC][IC+1];
+        
+        d[IC][IC+2] = 0.0; 
 
-        data.diffusion_tensor[IC+1][IC+2] = 0.0;
+        d[IC+2][IC] = d[IC][IC+2];
+        
+        d[IC+1][IC+2] = 0.0;
+
+        d[IC+2][IC+1] = d[IC+1][IC+2];
     };
-
-    for(int r = 0; r < 3 * N - 1; r++){
-
-        for(int t = r + 1; t < 3 * N; t++){
-
-            data.diffusion_tensor[t][r] = data.diffusion_tensor[r][t];
-        }
-    };
-
-
 
 };
 
-void covar(Data_task& data, double dt){
+void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
     int N = data.positions.size();
 
@@ -254,8 +261,10 @@ void covar(Data_task& data, double dt){
         L[i][i] = std::sqrt(data.diffusion_tensor[i][i] - sum);
     }
 
-    //randomly chosen by me
-    int random_number_seed = 11;
+    //logic taken from bd_random_walk in the ./thermostats/brownian_inline.hpp file
+    auto random_number_seed = brownian.rng_seed();
+
+    auto counter = brownian.rng_counter();
 
     for(int f = 0; f < 3 * N; f++){
 
@@ -264,7 +273,7 @@ void covar(Data_task& data, double dt){
 
         //changing the key every loop with loop index to provide different noise
 
-        double ndrn = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK, 1>(dt, random_number_seed, f)[0];
+        double ndrn = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(counter, random_number_seed, f)[0];
 
         XI[f] = ndrn * std::sqrt(2.0 * dt);
 

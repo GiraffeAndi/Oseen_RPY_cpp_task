@@ -41,41 +41,37 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
 #ifdef Oseen_RPY
 
-    Data_task data;
+   int N = particles.size();
 
-    data.pot_energ = 0.0;
+    Data_task data(N);
 
-    data.virial = 0.0;
-
-	//not sure about this, can be changed
+	  //not sure about this, can be changed
     data.dt = time_step;
+
+    //adressing the fact that gamma is not always a single number
+    const double gamma = 
+    #ifdef PARTICLE_ANISOTROPY
+    
+    //randomly chosen by me 
+    brownian_gamma[0]; 
+    
+    #else
+    
+    brownian_gamma;
+    
+    #endif
 
     //chosen with help from LJ potential in User guide.
     double rcut = std::pow(2.0, 1.0/6.0) * sigma;
 
     //not sure if correct
 
-    double consij = (3.0 * kT) / (8.0 * sigma * brownian_gamma);
+    double consij = (3.0 * kT) / (8.0 * sigma * gamma);
 
-    double consii = kT / brownian_gamma;
-
-    //consii and consij have to be defined still
-
-    int N = particles.size();
+    double consii = kT / gamma;
 
     //Temperature in units of kT
     double temp = kT;
-
-
-    //resize to avoid errors
-
-    data.positions.resize(N, std::vector<double>(3, 0.0));
-
-    data.forces.resize(N, std::vector<double>(3, 0.0));
-
-    data.diffusion_tensor.resize(3*N, std::vector<double>(3*N, 0.0));
-
-    data.CRND.resize(3 * N, 0.0);
 
 
     for(int i=0; i < N; i++){
@@ -92,7 +88,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     
     calc_forces(data, sigma, rcut, consii, consij);
 
-    covar(data, time_step);
+    covar(data, time_step, brownian);
 
     move(data, time_step, temp);
 
