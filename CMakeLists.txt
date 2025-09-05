@@ -359,6 +359,8 @@ endif()
 
 set(Boost_NO_SYSTEM_PATHS ON)
 
+set(BOOST_ROOT "/path/to/your/boost-1.88.0")  # replace with your local Boost
+
 find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
