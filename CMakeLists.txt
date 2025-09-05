@@ -346,6 +346,12 @@ endif()
 # Boost
 #
 
+if(APPLE)
+    set(BOOST_ROOT "/usr/local/boost-1.88.0")
+    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include")
+    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
+endif()
+
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
 if(WITH_TESTS)
