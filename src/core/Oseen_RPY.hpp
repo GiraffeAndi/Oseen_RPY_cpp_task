@@ -1,4 +1,9 @@
+#ifndef OSEEN_RPY_HPP
+#define OSEEN_RPY_HPP
+
 #include <vector>
+
+#include "thermostat.hpp"
 
 struct Data_task{
     
@@ -14,7 +19,7 @@ struct Data_task{
     double pot_energ, virial, dt;
 
     //constructor
-    Data_task(size_t N) : forces(N, std::vector<double>(3, 0.0)),
+    Data_task(std::size_t N) : forces(N, std::vector<double>(3, 0.0)),
     
                           positions(N, std::vector<double>(3, 0.0)),
                                     
@@ -34,3 +39,5 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian);
 
 void move(Data_task& data, double dt, double temp);
+
+#endif

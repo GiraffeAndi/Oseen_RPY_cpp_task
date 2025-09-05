@@ -27,8 +27,6 @@
 #include "Particle.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
-#include "thermostat.hpp"
-
 #include "Oseen_RPY.hpp"
 
 // Oseen_RPY.cpp not in the same folder will it compile like this?
@@ -41,7 +39,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
 #ifdef Oseen_RPY
 
-   int N = particles.size();
+   const std::size_t N = particles.size();
 
     Data_task data(N);
 
@@ -99,7 +97,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
                     particles[i].pos()[2] = data.positions[i][2];
 
-                };
+                }
 #endif
 }
 

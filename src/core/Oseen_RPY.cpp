@@ -10,7 +10,7 @@
 
 void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij){
 
-    const int N = data.positions.size();
+    const std::size_t N = data.positions.size();
 
     std::vector<double> RXI(N, 0.0);
 
@@ -36,7 +36,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
     //0 for Oseen
     double RPIJ;
     
-    int IC, JC;
+    std::size_t IC, JC;
     
     const double rcutsq = rcut * rcut;
 
@@ -51,7 +51,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
     auto &d = data.diffusion_tensor;
 
     //setting initial forces to zero
-    for(int k = 0; k < N; k++){
+    for(std::size_t k = 0; k < N; k++){
 
         data.forces[k][0] = 0.0;
 
@@ -61,7 +61,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     };
 
-    for(int i = 0; i < N - 1; i++){
+    for(std::size_t i = 0; i < N - 1; i++){
 
         RXI[i] = data.positions[i][0];
 
@@ -77,9 +77,9 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         FZI = data.forces[i][2];
 
         //the counter has to be adjusted 
-        const IC = 3 * i;
+        IC = 3 * i;
         
-        for(int j = i + 1; j < N; j++){
+        for(std::size_t j = i + 1; j < N; j++){
 
             Utils::Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
             
@@ -96,7 +96,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             
             RIJSQ = RXIJ * RXIJ + RYIJ * RYIJ + RZIJ * RZIJ;
 
-            const JC = 3 * j;
+            JC = 3 * j;
 
             RIJ = std::sqrt(RIJSQ);
 
@@ -184,9 +184,9 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     data.pot_energ *= 4.0;
 
-    data.virial *= 48.0/3.0;
+    data.virial *= 16.0;
 
-    for(int p = 0; p < N; p++){
+    for(std::size_t p = 0; p < N; p++){
 
         data.forces[p][0] *= 48.0;
 
@@ -195,7 +195,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         data.forces[p][2] *= 48.0;
 
         //counter again has to be adjusted
-        const IC = 3 * p;
+        IC = 3 * p;
 
         d[IC][IC] = consii;
 
@@ -216,11 +216,11 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         d[IC+2][IC+1] = d[IC+1][IC+2];
     };
 
-};
+}
 
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
-    int N = data.positions.size();
+    const std::size_t N = data.positions.size();
 
     std::vector<std::vector<double>> L;
 
@@ -234,15 +234,15 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
     L[1][1] = std::sqrt(data.diffusion_tensor[1][1] - L[1][0] * L[1][0]);
 
-    for(int i = 2; i < 3 * N; i++){
+    for(std::size_t i = 2; i < 3 * N; i++){
 
         L[i][1] = data.diffusion_tensor[i][1]/L[1][1];
 
-        for(int j = 1; j < i; j++){
+        for(std::size_t j = 1; j < i; j++){
 
             double sum = 0.0;
 
-            for(int k = 0; k < j; k++){
+            for(std::size_t k = 0; k < j; k++){
 
                 sum += L[i][k] * L[j][k];
             }
@@ -253,7 +253,7 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
         double sum = 0.0;
 
-        for(int p = 0; p < i - 1; p++){
+        for(std::size_t p = 0; p < i - 1; p++){
 
             sum += L[i][p] * L[i][p];
         }
@@ -266,7 +266,7 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
     auto counter = brownian.rng_counter();
 
-    for(int f = 0; f < 3 * N; f++){
+    for(std::size_t f = 0; f < 3 * N; f++){
 
         //ndrn = normally distributed random number
         //used template from random.hpp instead of seperate gauss function
@@ -279,7 +279,7 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
         double sum = 0.0;
 
-        for(int w = 0; w <= f; w++){
+        for(std::size_t w = 0; w <= f; w++){
 
             sum += L[f][w] * XI[w];
         }
@@ -288,17 +288,17 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
     }
 
-};
+}
 
 void move(Data_task& data, double dt, double temp){
 
-    int N = data.positions.size();
+    const std::size_t N = data.positions.size();
 
     std::vector<double> F(3 * N, 0.0);
 
-    for(int i = 0; i < N; i++){
+    for(std::size_t i = 0; i < N; i++){
 
-        int IC = 3 * i;
+        std::size_t IC = 3 * i;
 
         F[IC] = data.forces[i][0];
 
@@ -308,9 +308,9 @@ void move(Data_task& data, double dt, double temp){
 
     }
 
-    for(int j = 0; j < N; j++){
+    for(std::size_t j = 0; j < N; j++){
 
-        int JC = 3 * j;
+        std::size_t JC = 3 * j;
 
         double sumx = 0.0;
 
@@ -318,7 +318,7 @@ void move(Data_task& data, double dt, double temp){
 
         double sumz = 0.0;
 
-        for(int c = 0; c < 3 * N; c++){
+        for(std::size_t c = 0; c < 3 * N; c++){
 
             sumx += data.diffusion_tensor[JC][c] * F[c];
 
@@ -334,5 +334,5 @@ void move(Data_task& data, double dt, double temp){
         data.positions[j][2] += (sumz * dt)/temp + data.CRND[JC + 2];
     }
 
-};
+}
 
