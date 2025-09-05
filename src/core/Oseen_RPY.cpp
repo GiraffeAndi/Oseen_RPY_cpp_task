@@ -88,11 +88,11 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             //see grid.hpp file for box_geo
             Utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
 
-            RXIJ = sys_dist.x;
+            RXIJ = sys_dist[0];
 
-            RYIJ = sys_dist.y;
+            RYIJ = sys_dist[1];
 
-            RZIJ = sys_dist.z;
+            RZIJ = sys_dist[2];
             
             RIJSQ = RXIJ * RXIJ + RYIJ * RYIJ + RZIJ * RZIJ;
 
@@ -101,7 +101,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             RIJ = std::sqrt(RIJSQ);
 
             //maybe check for 1/0 case?
-            //not a priority rn
+            //not a priority at the moment
             RRIJSQ = 1.0/RIJSQ;
 
             OIJ = consij/RIJ;

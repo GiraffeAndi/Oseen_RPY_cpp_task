@@ -400,15 +400,16 @@ cdef class BrownianDynamics(Integrator):
     Brownian Dynamics integrator.
 
     """
+    """Changes made in order to facilitate the changed BD interface for the task"""
 
     def default_params(self):
-        return {}
+        return {"sigma": None}
 
     def valid_keys(self):
         """All parameters that can be set.
 
         """
-        return set()
+        return {"sigma"} 
 
     def required_keys(self):
         """Parameters that have to be set.
@@ -420,10 +421,23 @@ cdef class BrownianDynamics(Integrator):
         """Check that parameters are valid.
 
         """
-        pass
+        sigma = self._params["sigma"]
+
+        utils.check_type_or_throw_except(sigma, 1, float, "sigma must be a float") 
+
+        if sigma < 0:
+
+            raise ValueError("sigma must be non-negative")
 
     def _set_params_in_es_core(self):
-        integrate_set_bd()
+
+        if self._params["sigma"] != None:
+
+            integrate_set_bd_sigma(self._params['sigma'])
+
+        else:
+
+            integrate_set_bd()
 
 
 IF STOKESIAN_DYNAMICS:

@@ -39,7 +39,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
 #ifdef Oseen_RPY
 
-   const std::size_t N = particles.size();
+    const std::size_t N = particles.size();
 
     Data_task data(N);
 
@@ -47,7 +47,6 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     data.dt = time_step;
 
     //adressing the fact that gamma is not always a single number
-    const double gamma = 
     #ifdef PARTICLE_ANISOTROPY
     
     //randomly chosen by me 

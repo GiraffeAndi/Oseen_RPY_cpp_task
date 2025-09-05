@@ -23,7 +23,6 @@
 #define INTEGRATORS_BROWNIAN_INLINE_HPP
 
 #include "config.hpp"
-
 #include "ParticleRange.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
@@ -31,7 +30,6 @@
 #include "thermostats/brownian_inline.hpp"
 
 //removed const from ParticleRange &particles because they get changed in bd_hydrodynamics
-//is this okay?
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma){
 
@@ -52,6 +50,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.v() += bd_random_walk_vel(brownian, p);
 
 #endif // Oseen_RPY
+
 #ifdef ROTATION
       if (!p.can_rotate())
         continue;
@@ -61,10 +60,9 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
       p.omega() += bd_random_walk_vel_rot(brownian, p);
 #endif // ROTATION
+
     }
   }
-
-#endif
 
   increment_sim_time(time_step);
 

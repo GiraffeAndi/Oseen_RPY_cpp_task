@@ -237,7 +237,11 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, time_step, kT);
+
+    //here we extract sigma for the integrator
+    const auto actl_sigma = integrate_get_bd_sigma();
+
+    brownian_dynamics_propagator(brownian, particles, time_step, kT, actl_sigma);
     resort_particles_if_needed(particles);
     break;
 #ifdef STOKESIAN_DYNAMICS
@@ -509,6 +513,21 @@ void integrate_set_steepest_descent(const double f_max, const double gamma,
 void integrate_set_nvt() { mpi_set_integ_switch(INTEG_METHOD_NVT); }
 
 void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
+
+static double true_sigma = -1.0;
+
+//new for the task
+void integrate_set_bd_sigma(double sigma){
+
+  true_sigma = sigma;
+  
+  mpi_set_integ_switch(INTEG_METHOD_BD);
+
+}
+
+double integrate_get_bd_sigma(){return true_sigma; }
+
+
 
 void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {

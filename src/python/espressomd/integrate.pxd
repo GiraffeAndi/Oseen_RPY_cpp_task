@@ -44,6 +44,7 @@ cdef extern from "integrate.hpp" nogil:
                                              const double max_displacement) except +
     cdef extern cbool set_py_interrupt
     cdef void integrate_set_bd()
+    cdef void integrate_set_bd_sigma(double sigma)
 
 IF NPT:
     cdef extern from "integrate.hpp" nogil:

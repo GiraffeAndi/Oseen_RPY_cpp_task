@@ -132,6 +132,9 @@ void integrate_set_nvt();
 /** @brief Set the Brownian Dynamics integrator. */
 void integrate_set_bd();
 
+//alternative in case of Oseen/RPY
+void integrate_set_bd_sigma(double sigma);
+
 /** @brief Set the Stokesian Dynamics integrator. */
 void integrate_set_sd();
 
