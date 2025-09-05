@@ -346,24 +346,18 @@ endif()
 # Boost
 #
 
-cmake_policy(SET CMP0167 NEW)  
+list(APPEND BOOST_COMPONENTS mpi serialization filesystem)
 
-
-set(BOOST_ROOT "/home/andi/boost-1.88.0")  
-set(Boost_NO_SYSTEM_PATHS ON)              
-set(Boost_DEBUG ON)                       
-
-# Required components
-list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
+cmake_policy(SET CMP0167 NEW)
 
-find_package(Boost 1.88 REQUIRED COMPONENTS ${BOOST_COMPONENTS}) 
 
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
+find_package(Boost 1.69.0 REQUIRED COMPONENTS ${BOOST_COMPONENTS}) 
+
+
 
 #
 # Paths
