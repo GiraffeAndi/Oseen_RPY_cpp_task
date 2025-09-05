@@ -58,7 +58,8 @@ set(Espresso_core_SRC
     virtual_sites.cpp
     exclusions.cpp
     PartCfg.cpp
-    EspressoSystemStandAlone.cpp)
+    EspressoSystemStandAlone.cpp
+    Oseen_RPY.cpp)
 
 set(Espresso_cuda_SRC
     cuda_common_cuda.cu
