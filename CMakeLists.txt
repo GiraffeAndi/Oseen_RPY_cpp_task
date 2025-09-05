@@ -346,10 +346,9 @@ endif()
 # Boost
 #
 
-if(APPLE)
-    set(BOOST_ROOT "/usr/local/boost-1.88.0")
-    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include")
-    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
+# Force CMake to prefer your BOOST_ROOT
+if(DEFINED ENV{BOOST_ROOT})
+  set(BOOST_ROOT $ENV{BOOST_ROOT})
 endif()
 
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
@@ -357,6 +356,8 @@ list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
+
+set(Boost_NO_SYSTEM_PATHS ON)
 
 find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 
