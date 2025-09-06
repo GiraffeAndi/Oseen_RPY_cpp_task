@@ -81,9 +81,9 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
         
         for(std::size_t j = i + 1; j < N; j++){
 
-            Utils::Vector3d pos1 (RXI[i], RYI[i], RZI[i]);
+            Utils::Vector3d pos1 {RXI[i], RYI[i], RZI[i]};
             
-            Utils::Vector3d pos2 (RXI[j], RYI[j], RZI[j]);
+            Utils::Vector3d pos2 {RXI[j], RYI[j], RZI[j]};
             
             //see grid.hpp file for box_geo
             Utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
