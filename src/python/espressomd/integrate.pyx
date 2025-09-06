@@ -423,6 +423,13 @@ cdef class BrownianDynamics(Integrator):
         """
         sigma = self._params["sigma"]
 
+        """Assessing the case of Sigma = None"""
+        if sigma is None:
+
+            return
+
+        """Checking for correct input if sigma != 0"""
+
         utils.check_type_or_throw_except(sigma, 1, float, "sigma must be a float") 
 
         if sigma < 0:
