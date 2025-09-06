@@ -222,7 +222,9 @@ static bool integrator_step_1(ParticleRange const &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-static void integrator_step_2(ParticleRange const &particles, double kT) {
+
+//removed the const from &particles
+static void integrator_step_2(ParticleRange &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -235,7 +237,7 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
     velocity_verlet_npt_step_2(particles, time_step);
     break;
 #endif
-  case INTEG_METHOD_BD:
+  case INTEG_METHOD_BD:{
     // the Ermak-McCammon's Brownian Dynamics requires a single step
 
     //here we extract sigma for the integrator
@@ -244,6 +246,7 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
     brownian_dynamics_propagator(brownian, particles, time_step, kT, actl_sigma);
     resort_particles_if_needed(particles);
     break;
+  }
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
     // Nothing
