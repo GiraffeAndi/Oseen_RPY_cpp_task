@@ -403,7 +403,7 @@ cdef class BrownianDynamics(Integrator):
     """Changes made in order to facilitate the changed BD interface for the task"""
 
     def default_params(self):
-        return {"sigma": None}
+        return {}
 
     def valid_keys(self):
         """All parameters that can be set.
@@ -421,7 +421,7 @@ cdef class BrownianDynamics(Integrator):
         """Check that parameters are valid.
 
         """
-        sigma = self._params["sigma"]
+        sigma = self._params.get("sigma", None)
 
         """Assessing the case of Sigma = None"""
         if sigma is None:
@@ -438,9 +438,11 @@ cdef class BrownianDynamics(Integrator):
 
     def _set_params_in_es_core(self):
 
-        if self._params["sigma"] != None:
+        sigma = self._params.get("sigma", None)  
 
-            integrate_set_bd_sigma(self._params['sigma'])
+        if sigma != None:
+
+            integrate_set_bd_sigma(sigma)
 
         else:
 
