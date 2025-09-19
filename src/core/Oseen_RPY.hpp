@@ -36,8 +36,8 @@ struct Data_task{
 void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij);
 
             
-void covar(Data_task& data, double dt, BrownianThermostat const &brownian);
+void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT);
 
-void move(Data_task& data, double dt, double temp);
+void move(Data_task& data, double dt);
 
 #endif

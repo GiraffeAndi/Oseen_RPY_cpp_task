@@ -40,8 +40,9 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
 
 #ifdef Oseen_RPY
 
+
       bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma);
-      
+
 #else
 
       p.pos() += bd_drag(brownian.gamma, p, time_step);
@@ -50,6 +51,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.v() += bd_random_walk_vel(brownian, p);
 
 #endif // Oseen_RPY
+
 
 #ifdef ROTATION
       if (!p.can_rotate())

@@ -114,12 +114,29 @@ cdef class IntegratorHandle:
         """
         self._integrator = VelocityVerletIsotropicNPT(*args, **kwargs)
 
-    def set_brownian_dynamics(self):
+    def set_brownian_dynamics(self, sigma = None):
         """
         Set the integration method to BD.
 
+        Parameters
+        ----------
+
+        sigma: float, optional
+
+        The particle diameter
+
         """
+
         self._integrator = BrownianDynamics()
+
+        params = self._integrator.get_params()
+
+        if sigma != None:
+
+            params["sigma"] = sigma
+
+        self._integrator.__setstate__(params)
+
 
     def set_stokesian_dynamics(self, *args, **kwargs):
         """
@@ -438,7 +455,7 @@ cdef class BrownianDynamics(Integrator):
 
     def _set_params_in_es_core(self):
 
-        sigma = self._params.get("sigma", None)  
+        sigma = self._params.get("sigma", None)
 
         if sigma != None:
 

@@ -29,8 +29,6 @@
 #include "rotation.hpp"
 #include "Oseen_RPY.hpp"
 
-// Oseen_RPY.cpp not in the same folder will it compile like this?
-
 #include <utils/Vector.hpp>
 
 #include <cmath>
@@ -50,54 +48,75 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     #ifdef PARTICLE_ANISOTROPY
     
     //randomly chosen by me 
-    brownian_gamma[0]; 
+    auto gamma = brownian_gamma[0]; 
     
     #else
     
-    brownian_gamma;
+    double gamma = brownian_gamma;
     
     #endif
 
     //chosen with help from LJ potential in User guide.
     double rcut = std::pow(2.0, 1.0/6.0) * sigma;
 
-    //not sure if correct
+    //no kT
 
-    double consij = (3.0 * kT) / (8.0 * sigma * gamma);
+    double consij = 3.0 / (8.0 * sigma * gamma);
 
-    double consii = kT / gamma;
+    double consii = 1.0 / gamma;
 
     //Temperature in units of kT
     double temp = kT;
 
+    //new way of indexing old one did not work
+    int counter_1 = 0;
 
-    for(int i=0; i < N; i++){
+    for(auto &p : particles){
 
         //x-coordinates
-        data.positions[i][0] = particles[i].pos()[0];
+        data.positions[counter_1][0] = p.pos()[0];
         
         //y-coordinates
-        data.positions[i][1] = particles[i].pos()[1];
+        data.positions[counter_1][1] = p.pos()[1];
 
         //z-coordinates
-        data.positions[i][2] = particles[i].pos()[2];
+        data.positions[counter_1][2] = p.pos()[2];
+
+        ++counter_1;
     }
     
     calc_forces(data, sigma, rcut, consii, consij);
 
-    covar(data, time_step, brownian);
+    if(temp > 0.0){
 
-    move(data, time_step, temp);
+      covar(data, time_step, brownian, kT);
 
-    for(int i = 0; i < N; i++){
-                    particles[i].pos()[0] = data.positions[i][0];
+      move(data, time_step);
 
-                    particles[i].pos()[1] = data.positions[i][1];
+    }
+    
+    else{
 
-                    particles[i].pos()[2] = data.positions[i][2];
+      move(data, time_step);
+      
+    }
+
+    
+    //new way of indexing
+    int counter_2 = 0;
+
+    for(auto &p : particles){
+                    p.pos()[0] = data.positions[counter_2][0];
+
+                    p.pos()[1] = data.positions[counter_2][1];
+
+                    p.pos()[2] = data.positions[counter_2][2];
+
+                    ++counter_2;
 
                 }
-#endif
+
+#endif                
 }
 
               

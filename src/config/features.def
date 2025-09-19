@@ -84,6 +84,7 @@ EK_DEBUG                        requires ELECTROKINETICS
 
 /* Brownian-Dynamics feature */
 Oseen_RPY                       implies BROWNIAN_DYNAMICS
+Oseen                           implies BROWNIAN_DYNAMICS
 
 /* Interaction features */
 TABULATED

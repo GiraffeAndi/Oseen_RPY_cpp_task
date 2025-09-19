@@ -108,6 +108,14 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
             RPIJ = OIJ * sigmacub12 * RRIJSQ;
 
+            //assessing Oseen Case
+            
+            #ifdef Oseen
+
+            RPIJ = 0.0;
+
+            #endif
+
             //making the tensor symmetric in one loop
             //avoiding extra loop at the end
 
@@ -218,7 +226,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
 }
 
-void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
+void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT){
 
     const std::size_t N = data.positions.size();
 
@@ -275,7 +283,7 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
         double ndrn = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(counter, random_number_seed, f)[0];
 
-        XI[f] = ndrn * std::sqrt(2.0 * dt);
+        XI[f] = ndrn * std::sqrt(2.0 * dt * kT);
 
         double sum = 0.0;
 
@@ -290,7 +298,7 @@ void covar(Data_task& data, double dt, BrownianThermostat const &brownian){
 
 }
 
-void move(Data_task& data, double dt, double temp){
+void move(Data_task& data, double dt){
 
     const std::size_t N = data.positions.size();
 
@@ -327,11 +335,11 @@ void move(Data_task& data, double dt, double temp){
             sumz += data.diffusion_tensor[JC + 2][c] * F[c];
         }
 
-        data.positions[j][0] += (sumx * dt)/temp + data.CRND[JC];
+        data.positions[j][0] += sumx * dt + data.CRND[JC];
 
-        data.positions[j][1] += (sumy * dt)/temp + data.CRND[JC + 1];
+        data.positions[j][1] += sumy * dt + data.CRND[JC + 1];
 
-        data.positions[j][2] += (sumz * dt)/temp + data.CRND[JC + 2];
+        data.positions[j][2] += sumz * dt + data.CRND[JC + 2];
     }
 
 }
