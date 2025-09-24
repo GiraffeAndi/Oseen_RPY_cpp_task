@@ -42,7 +42,6 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     double SR2, SR6, VIJ, WIJ;
 
-    //has to be adjusted formula is totally different to fortran code
     const double sigmacub12 = (sigma * sigma *sigma)/12;
 
     const double SIGSQ = sigma * sigma;
@@ -57,17 +56,17 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
         data.forces[k][1] = 0.0;
 
-        data.forces[k][2] = 0.0; 
+        data.forces[k][2] = 0.0;
+        
+        RXI[k] = data.positions[k][0];
+
+        RYI[k] = data.positions[k][1];
+
+        RZI[k] = data.positions[k][2];
 
     };
 
     for(std::size_t i = 0; i < N - 1; i++){
-
-        RXI[i] = data.positions[i][0];
-
-        RYI[i] = data.positions[i][1];
-
-        RZI[i] = data.positions[i][2];
 
         //all the same because we zeroed them before
         FXI = data.forces[i][0];
@@ -196,11 +195,12 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     for(std::size_t p = 0; p < N; p++){
 
-        data.forces[p][0] *= 48.0;
+        //changed from *= 48 to *= 2 for simulation purposes
+        data.forces[p][0] *= 2.0;
 
-        data.forces[p][1] *= 48.0;
+        data.forces[p][1] *= 2.0;
 
-        data.forces[p][2] *= 48.0;
+        data.forces[p][2] *= 2.0;
 
         //counter again has to be adjusted
         IC = 3 * p;

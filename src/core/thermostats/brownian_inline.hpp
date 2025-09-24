@@ -45,16 +45,9 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     data.dt = time_step;
 
     //adressing the fact that gamma is not always a single number
-    #ifdef PARTICLE_ANISOTROPY
     
-    //randomly chosen by me 
-    auto gamma = brownian_gamma[0]; 
+    double gamma = brownian_gamma[0];
     
-    #else
-    
-    double gamma = brownian_gamma;
-    
-    #endif
 
     //chosen with help from LJ potential in User guide.
     double rcut = std::pow(2.0, 1.0/6.0) * sigma;
@@ -116,7 +109,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
                 }
 
-#endif                
+#endif //Oseen_RPY                
 }
 
               
