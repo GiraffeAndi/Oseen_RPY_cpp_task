@@ -109,7 +109,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
             //assessing Oseen Case
             
-            #ifdef Oseen
+            #ifdef OSEEN
 
             RPIJ = 0.0;
 

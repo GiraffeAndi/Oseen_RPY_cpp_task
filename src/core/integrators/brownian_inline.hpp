@@ -38,7 +38,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
     // Don't propagate translational degrees of freedom of vs
     if (!p.is_virtual() or thermo_virtual) {
 
-#ifdef Oseen_RPY
+#ifdef OSEEN_RPY
 
 
       bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma);
@@ -50,7 +50,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.pos() += bd_random_walk(brownian, p, time_step, kT);
       p.v() += bd_random_walk_vel(brownian, p);
 
-#endif // Oseen_RPY
+#endif // OSEEN_RPY
 
 
 #ifdef ROTATION

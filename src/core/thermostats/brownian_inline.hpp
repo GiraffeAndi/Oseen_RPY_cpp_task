@@ -35,7 +35,7 @@
 
 void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma, Thermostat::GammaType const &brownian_gamma){
 
-#ifdef Oseen_RPY
+#ifdef OSEEN_RPY
 
     const std::size_t N = particles.size();
 
@@ -44,9 +44,14 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 	  //not sure about this, can be changed
     data.dt = time_step;
 
+    double gamma = brownian_gamma;
+
     //adressing the fact that gamma is not always a single number
+    #ifdef PARTICLE_ANISOTROPY
     
-    double gamma = brownian_gamma[0];
+    gamma = brownian_gamma[0];
+
+    #endif 
     
 
     //chosen with help from LJ potential in User guide.
@@ -109,7 +114,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
                 }
 
-#endif //Oseen_RPY                
+#endif //OSEEN_RPY                
 }
 
               

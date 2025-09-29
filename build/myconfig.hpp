@@ -40,7 +40,8 @@
 //#define EK_DEBUG
 
 /* Brownian-Dynamics feature */
-#define Oseen_RPY
+#define OSEEN_RPY
+//#define OSEEN
 
 /* Interaction features */
 //#define TABULATED
