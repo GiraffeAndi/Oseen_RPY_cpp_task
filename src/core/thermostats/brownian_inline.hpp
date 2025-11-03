@@ -44,14 +44,18 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 	  //not sure about this, can be changed
     data.dt = time_step;
 
-    double gamma = brownian_gamma;
-
     //adressing the fact that gamma is not always a single number
     #ifdef PARTICLE_ANISOTROPY
     
-    gamma = brownian_gamma[0];
+    double gamma = brownian_gamma[0];
 
     #endif 
+
+    #ifndef PARTICLE_ANISOTROPY
+
+    double gamma = brownian_gamma;
+
+    #endif
     
 
     //chosen with help from LJ potential in User guide.

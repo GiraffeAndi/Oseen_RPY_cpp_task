@@ -1,18 +1,18 @@
 
 
 /* Generic features */
-//#define EXTERNAL_FORCES
+#define EXTERNAL_FORCES
 //#define MASS
 //#define EXCLUSIONS
 //#define BOND_CONSTRAINT
-//#define THERMOSTAT_PER_PARTICLE
+#define THERMOSTAT_PER_PARTICLE
 //#define COLLISION_DETECTION
 //#define NPT
 //#define ENGINE
-//#define PARTICLE_ANISOTROPY
+#define PARTICLE_ANISOTROPY
 
 /* Rotation */
-//#define ROTATION
+#define ROTATION
 //#define ROTATIONAL_INERTIA
 
 /* Electrostatics */
@@ -21,7 +21,7 @@
 //#define MMM1D_MACHINE_PREC
 
 /* Magnetostatics */
-//#define DIPOLES
+#define DIPOLES
 
 /* Virtual sites features */
 //#define VIRTUAL_SITES
@@ -46,7 +46,7 @@
 /* Interaction features */
 //#define TABULATED
 //#define LENNARD_JONES
-//#define WCA
+#define WCA
 //#define LENNARD_JONES_GENERIC
 //#define LJCOS
 //#define LJCOS2

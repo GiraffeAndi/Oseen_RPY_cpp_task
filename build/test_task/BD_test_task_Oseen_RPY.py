@@ -30,17 +30,11 @@ system.cell_system.skin = 0.1
  
 """Triangle Setup"""
  
-part1 = system.part.add(pos = [0.0, 0.0, 0.0])
-
-part1.f = [0.0, 0.0, 1.0]
+part1 = system.part.add(pos = [0.0, 0.0, 0.0], ext_force = [0.0, 0.0, 1.0])
  
-part2 = system.part.add(pos = [sep, 0.0, 0.0])
-
-part2.f = [0.0, 0.0, 1.0]
+part2 = system.part.add(pos = [sep, 0.0, 0.0], ext_force = [0.0, 0.0, 1.0])
  
-part3 = system.part.add(pos = [sep/2, (np.sqrt(3)/2) * sep, 0])
-
-part3.f = [0.0, 0.0, 1.0]
+part3 = system.part.add(pos = [sep/2, (np.sqrt(3)/2) * sep, 0], ext_force = [0.0, 0.0, 1.0])
  
 """Setup for Brownian mechanics"""
  
