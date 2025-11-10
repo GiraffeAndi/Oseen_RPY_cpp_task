@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij){
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij){
 
     const std::size_t N = data.positions.size();
 
@@ -103,7 +103,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
             //not a priority at the moment
             RRIJSQ = 1.0/RIJSQ;
 
-            OIJ = consij/RIJ;
+            OIJ = consij[i]/RIJ;
 
             RPIJ = OIJ * sigmacub12 * RRIJSQ;
 
@@ -148,7 +148,8 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
                 SR6 = SR2 * SR2 * SR2;
 
-                VIJ = SR6 * (SR6 - 1.0);
+                //WCA adaptation V(rcut) = 0
+                VIJ = SR6 * (SR6 - 1.0) + 0.25;
 
                 WIJ = SR6 * (SR6 - 0.5);
 
@@ -195,21 +196,21 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const d
 
     for(std::size_t p = 0; p < N; p++){
 
-        //changed from *= 48 to *= 2 for simulation purposes
-        data.forces[p][0] *= 2.0;
+        //changes?
+        data.forces[p][0] *= 48.0;
 
-        data.forces[p][1] *= 2.0;
+        data.forces[p][1] *= 48.0;
 
-        data.forces[p][2] *= 2.0;
+        data.forces[p][2] *= 48.0;
 
         //counter again has to be adjusted
         IC = 3 * p;
 
-        d[IC][IC] = consii;
+        d[IC][IC] = consii[p];
 
-        d[IC+1][IC+1] = consii;
+        d[IC+1][IC+1] = consii[p];
 
-        d[IC+2][IC+2] = consii;
+        d[IC+2][IC+2] = consii[p];
 
         d[IC][IC+1] = 0.0; 
 

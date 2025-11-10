@@ -44,28 +44,52 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 	  //not sure about this, can be changed
     data.dt = time_step;
 
-    //adressing the fact that gamma is not always a single number
-    #ifdef PARTICLE_ANISOTROPY
+    std::vector<Thermostat::GammaType> gamma_per_particle(N);
+
+    std::size_t i = 0;
+
+    for(auto &p : particles){
+
+ #ifdef THERMOSTAT_PER_PARTICLE
+
+      auto gamma = p.gamma();
     
-    double gamma = brownian_gamma[0];
+      if (gamma >= Thermostat::GammaType{}) {
 
-    #endif 
+    #ifdef PARTICLE_ANISOTROPY
+          
+        gamma_per_particle[i] = Thermostat::GammaType{gamma[0], gamma[0], gamma[0]};  //we asssume hydrodynamically isotropic particles gamma x = gamma y = gamma z;
 
-    #ifndef PARTICLE_ANISOTROPY
-
-    double gamma = brownian_gamma;
+    #else
+        gamma_per_particle[i] = gamma;
 
     #endif
     
+      } else
+ #endif
+      {
+        gamma_per_particle[i] = brownian_gamma;
+      }
+
+      i++;
+    }
 
     //chosen with help from LJ potential in User guide.
     double rcut = std::pow(2.0, 1.0/6.0) * sigma;
 
     //no kT
 
-    double consij = 3.0 / (8.0 * sigma * gamma);
+    std::vector<double> consij(N);
 
-    double consii = 1.0 / gamma;
+    std::vector<double> consii(N);
+
+    for(std::size_t i = 0; i < N; i++){
+      
+      consij[i] = 3.0 / (8.0 * sigma * gamma_per_particle[i][0]);
+      
+      consii[i] = 1.0 / gamma_per_particle[i][0];
+
+    }
 
     //Temperature in units of kT
     double temp = kT;

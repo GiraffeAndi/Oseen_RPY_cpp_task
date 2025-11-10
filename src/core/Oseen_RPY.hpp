@@ -33,7 +33,7 @@ struct Data_task{
 };
 
 //pot_energ and virial are part of data
-void calc_forces(Data_task& data, const double sigma, const double rcut, const double consii, const double consij);
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij);
 
             
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT);

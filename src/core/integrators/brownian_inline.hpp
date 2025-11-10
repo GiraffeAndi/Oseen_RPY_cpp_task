@@ -34,23 +34,21 @@
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma){
 
 
-  for (auto &p : particles) {
-    // Don't propagate translational degrees of freedom of vs
-    if (!p.is_virtual() or thermo_virtual) {
-
 #ifdef OSEEN_RPY
 
-
+//virtual states?
       bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma);
 
 #else
+
+  for (auto &p : particles) {
+    // Don't propagate translational degrees of freedom of vs
+    if (!p.is_virtual() or thermo_virtual) {
 
       p.pos() += bd_drag(brownian.gamma, p, time_step);
       p.v() = bd_drag_vel(brownian.gamma, p);
       p.pos() += bd_random_walk(brownian, p, time_step, kT);
       p.v() += bd_random_walk_vel(brownian, p);
-
-#endif // OSEEN_RPY
 
 
 #ifdef ROTATION
@@ -66,7 +64,10 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
     }
   }
 
+#endif // OSEEN_RPY
+
   increment_sim_time(time_step);
 
-#endif // INTEGRATORS_BROWNIAN_INLINE_HPP
 }
+
+#endif // INTEGRATORS_BROWNIAN_INLINE_HPP

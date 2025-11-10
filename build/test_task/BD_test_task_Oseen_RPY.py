@@ -10,7 +10,7 @@ import os
  
 system = espressomd.System(box_l = [10.0, 10.0, 10.0])
  
-print("Please enter the desired separation between the particles.")
+print("Please enter the desired separation in particle diameter(s) (sigma) between the particles.")
  
 sep = float(input("> "))
  
