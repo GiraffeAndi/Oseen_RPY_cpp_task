@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij){
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij, const std::vector<double> consii_rot, const std::vector<double> consij_rot){
 
     const std::size_t N = data.positions.size();
 
@@ -17,6 +17,12 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
     std::vector<double> RYI(N, 0.0);
 
     std::vector<double> RZI(N, 0.0);
+
+    std::vector<std::vector<double>> rr_block(3, std::vector<double>(3, 0.0));
+
+    std::vector<std::vector<double>> rr(3, std::vector<double>(3, 0.0));
+
+    std::vector<std::vector<double>> levi_civita(3, std::vector<double>(3, 0.0));
 
     double FXI, FYI, FZI;
 
@@ -32,11 +38,10 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
     double OIJ;
 
-    
     //0 for Oseen
     double RPIJ;
     
-    std::size_t IC, JC;
+    std::size_t IC, JC, IC6, JC6;
     
     const double rcutsq = rcut * rcut;
 
@@ -49,7 +54,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
     //increases readability later
     auto &d = data.diffusion_tensor;
 
-    //setting initial forces to zero
+    //setting initial forces to zero setting the initial positions
     for(std::size_t k = 0; k < N; k++){
 
         data.forces[k][0] = 0.0;
@@ -99,8 +104,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
             RIJ = std::sqrt(RIJSQ);
 
-            //maybe check for 1/0 case?
-            //not a priority at the moment
+            //potential error
             RRIJSQ = 1.0/RIJSQ;
 
             OIJ = consij[i]/RIJ;
@@ -115,32 +119,103 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
             #endif
 
-            //making the tensor symmetric in one loop
-            //avoiding extra loop at the end
+            //translational part
 
-            d[IC][JC] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RXIJ * RXIJ * RRIJSQ;
+            //defining constants to maintain readability
+
+            double const1 = OIJ + RPIJ;
+
+            double const2 = (OIJ - 3.0 * RPIJ) * RRIJSQ;
+
+            d[IC][JC] = const1 + const2 * RXIJ * RXIJ;
 
             d[JC][IC] = d[IC][JC];
 
-            d[IC+1][JC+1] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RYIJ * RYIJ * RRIJSQ;
+            d[IC+1][JC+1] = const1 + const2 * RYIJ * RYIJ;
 
             d[JC+1][IC+1] = d[IC+1][JC+1];
 
-            d[IC+2][JC+2] = OIJ + RPIJ + (OIJ - 3.0 * RPIJ) * RZIJ * RZIJ * RRIJSQ;
+            d[IC+2][JC+2] = const1 + const2 * RZIJ * RZIJ;
 
             d[JC+2][IC+2] = d[IC+2][JC+2];
 
-            d[IC][JC+1] = (OIJ - 3.0 * RPIJ) * RXIJ * RYIJ * RRIJSQ;
+            d[IC][JC+1] = const2 * RXIJ * RYIJ;
 
             d[JC+1][IC] = d[IC][JC+1];
 
-            d[IC][JC+2] = (OIJ - 3.0 * RPIJ) * RXIJ * RZIJ * RRIJSQ;
+            d[IC][JC+2] = const2 * RXIJ * RZIJ;
 
             d[JC+2][IC] = d[IC][JC+2];
 
-            d[IC+1][JC+2] = (OIJ - 3.0 * RPIJ) * RYIJ * RZIJ * RRIJSQ;
+            d[IC+1][JC+2] = const2 * RYIJ * RZIJ;
 
             d[JC+2][IC+1] = d[IC+1][JC+2];
+
+            //mixed and rotational part
+
+            IC6 = 6 * i;
+
+            JC6 = 6 * j;
+
+            double XIJ_hat = RXIJ/RIJ;
+
+            double YIJ_hat = RYIJ/RIJ;
+
+            double ZIJ_hat = RZIJ/RIJ;
+
+            rr[0][0] = XIJ_hat * XIJ_hat;
+
+            rr[0][1] = XIJ_hat * YIJ_hat;
+
+            rr[0][2] = XIJ_hat * ZIJ_hat;
+
+            rr[1][0] = YIJ_hat * XIJ_hat;
+
+            rr[1][1] = YIJ_hat * YIJ_hat;
+
+            rr[1][2] = YIJ_hat * ZIJ_hat;
+
+            rr[2][0] = ZIJ_hat * XIJ_hat;
+
+            rr[2][1] = ZIJ_hat * YIJ_hat;
+
+            rr[2][2] = ZIJ_hat * ZIJ_hat;
+
+            levi_civita[0][1] = ZIJ_hat;
+
+            levi_civita[0][2] = - YIJ_hat;
+
+            levi_civita[1][0] = - ZIJ_hat;
+
+            levi_civita[1][2] = XIJ_hat;
+
+            levi_civita[2][0] = YIJ_hat;
+
+            levi_civita[2][1] = -XIJ_hat;
+
+            for (std::size_t a = 0; a < 3; a++){
+
+                for (std::size_t b = 0; b < 3; b++){
+
+                    //rr
+                    //a is particle radius => sigma/2
+                    d[IC6 + 3 + a][JC6 + 3 + b] =  - consij_rot[i] * (sigma/2)/RIJ * (sigma/2)/RIJ * (sigma/2)/RIJ * (((a == b) ? 1.0 : 0.0)- 3 * rr[a][b]);
+
+                    d[JC6 + 3 + b][IC6 + 3 + a] = d[IC6 + 3 + a][JC6 + 3 + b];
+
+                    //rt
+                    d[IC6 + 3 + a][JC6 + b] = levi_civita[a][b] * consij_rot[i] * (sigma/2 * sigma/2 * sigma/2)/(RIJ * RIJ);
+
+                    d[JC6 + 3 + a][IC6 + b] = - levi_civita[b][a] * consij_rot[i] * (sigma/2 * sigma/2 * sigma/2)/(RIJ * RIJ);
+
+
+                    //tr
+                    d[IC6 + a][JC6 + 3 + b] = d[IC6 + 3 + a][JC6 + b];
+
+                    d[JC6 + a][IC6 + 3 + b] = d[JC6 + 3 + a][IC6 + b];
+
+                }
+            }
 
             if(RIJSQ < rcutsq){
 
@@ -196,15 +271,16 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
     for(std::size_t p = 0; p < N; p++){
 
-        //changes?
         data.forces[p][0] *= 48.0;
 
         data.forces[p][1] *= 48.0;
 
         data.forces[p][2] *= 48.0;
 
-        //counter again has to be adjusted
+        //Oseen has no rotations
         IC = 3 * p;
+
+        IC6 = 6 * p;
 
         d[IC][IC] = consii[p];
 
@@ -223,6 +299,25 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
         d[IC+1][IC+2] = 0.0;
 
         d[IC+2][IC+1] = d[IC+1][IC+2];
+
+        d[IC6 + 3][IC6 + 3] = consii_rot[p];
+
+        d[IC6 + 4][IC6 + 4] = consii_rot[p];
+
+        d[IC6 + 5][IC6 + 5] = consii_rot[p];
+
+        d[IC6 + 3][IC6 + 4] = 0.0;
+
+        d[IC6 + 3][IC6 + 5] = 0.0;
+
+        d[IC6 + 4][IC6 + 3] = 0.0;
+
+        d[IC6 + 4][IC6 + 5] = 0.0;
+
+        d[IC6 + 5][IC6 + 3] = 0.0;
+
+        d[IC6 + 5][IC6 + 4] = 0.0;
+
     };
 
 }

@@ -37,7 +37,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
 #ifdef OSEEN_RPY
 
 //virtual states?
-      bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma);
+      bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma, brownian.gamma_rotation);
 
 #else
 

@@ -19,13 +19,13 @@ struct Data_task{
     double pot_energ, virial, dt;
 
     //constructor
-    Data_task(std::size_t N) : forces(N, std::vector<double>(3, 0.0)),
+    Data_task(std::size_t N) : forces(N, std::vector<double>(6, 0.0)),
     
-                          positions(N, std::vector<double>(3, 0.0)),
+                          positions(N, std::vector<double>(6, 0.0)),
                                     
-                          diffusion_tensor(3*N, std::vector<double>(3*N, 0.0)),
+                          diffusion_tensor(6*N, std::vector<double>(6*N, 0.0)),
 
-                          CRND(3*N, 0.0),
+                          CRND(6*N, 0.0),
 
                           pot_energ(0.0), virial(0.0), dt(0.0)
     {}
@@ -33,7 +33,7 @@ struct Data_task{
 };
 
 //pot_energ and virial are part of data
-void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij);
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij, const std::vector<double> consii_rot, const std::vector<double> consij_rot);
 
             
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT);
