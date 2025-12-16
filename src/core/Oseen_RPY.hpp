@@ -32,8 +32,12 @@ struct Data_task{
 
 };
 
+#include <fstream>
+
+void dump_diffusion_tensor(const std::vector<std::vector<double>>& d);
+
 //pot_energ and virial are part of data
-void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij, const std::vector<double> consii_rot, const std::vector<double> consij_rot);
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> cons_tr, const std::vector<double> cons_rot);
 
             
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT);

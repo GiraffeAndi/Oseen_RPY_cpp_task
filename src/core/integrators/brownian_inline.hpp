@@ -29,8 +29,6 @@
 #include "thermostat.hpp"
 #include "thermostats/brownian_inline.hpp"
 
-//removed const from ParticleRange &particles because they get changed in bd_hydrodynamics
-
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma){
 
 

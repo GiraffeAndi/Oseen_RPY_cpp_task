@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> consii, const std::vector<double> consij, const std::vector<double> consii_rot, const std::vector<double> consij_rot){
+void calc_forces(Data_task& data, const double sigma, const double rcut, const std::vector<double> cons_tr, const std::vector<double> cons_rot){
 
     const std::size_t N = data.positions.size();
 
@@ -17,8 +17,6 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
     std::vector<double> RYI(N, 0.0);
 
     std::vector<double> RZI(N, 0.0);
-
-    std::vector<std::vector<double>> rr_block(3, std::vector<double>(3, 0.0));
 
     std::vector<std::vector<double>> rr(3, std::vector<double>(3, 0.0));
 
@@ -32,14 +30,11 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
     double RIJSQ;
 
-    double RIJ;
+    double RIJ, RIJ3;
 
     double RRIJSQ;
 
-    double OIJ;
-
-    //0 for Oseen
-    double RPIJ;
+    double I;
     
     std::size_t IC, JC, IC6, JC6;
     
@@ -47,7 +42,13 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
     double SR2, SR6, VIJ, WIJ;
 
-    const double sigmacub12 = (sigma * sigma *sigma)/12;
+    auto radi = sigma/2.0;
+
+    const double p1 = 3.0 * radi/4.0;
+
+    const double p3 = radi * radi * radi;
+
+    const double p2 = 0.5 * p3;
 
     const double SIGSQ = sigma * sigma;
 
@@ -71,7 +72,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
     };
 
-    for(std::size_t i = 0; i < N - 1; i++){
+    for(std::size_t i = 0; i < N-1; i++){
 
         //all the same because we zeroed them before
         FXI = data.forces[i][0];
@@ -79,9 +80,6 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
         FYI = data.forces[i][1];
         
         FZI = data.forces[i][2];
-
-        //the counter has to be adjusted 
-        IC = 3 * i;
         
         for(std::size_t j = i + 1; j < N; j++){
 
@@ -90,7 +88,7 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
             Utils::Vector3d pos2 {RXI[j], RYI[j], RZI[j]};
             
             //see grid.hpp file for box_geo
-            Utils::Vector3d sys_dist = box_geo.get_mi_vector(pos1, pos2);
+            Utils::Vector3d sys_dist = box_geo.get_mi_vector(pos2, pos1);
 
             RXIJ = sys_dist[0];
 
@@ -100,62 +98,20 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
             
             RIJSQ = RXIJ * RXIJ + RYIJ * RYIJ + RZIJ * RZIJ;
 
-            JC = 3 * j;
-
             RIJ = std::sqrt(RIJSQ);
+
+            RIJ3 = RIJ * RIJ * RIJ;
 
             //potential error
             RRIJSQ = 1.0/RIJSQ;
 
-            OIJ = consij[i]/RIJ;
+            IC = 3 * i;
 
-            RPIJ = OIJ * sigmacub12 * RRIJSQ;
+            JC = 3 * j;
 
-            //assessing Oseen Case
-            
-            #ifdef OSEEN
+            IC6 = 3 * N + IC;
 
-            RPIJ = 0.0;
-
-            #endif
-
-            //translational part
-
-            //defining constants to maintain readability
-
-            double const1 = OIJ + RPIJ;
-
-            double const2 = (OIJ - 3.0 * RPIJ) * RRIJSQ;
-
-            d[IC][JC] = const1 + const2 * RXIJ * RXIJ;
-
-            d[JC][IC] = d[IC][JC];
-
-            d[IC+1][JC+1] = const1 + const2 * RYIJ * RYIJ;
-
-            d[JC+1][IC+1] = d[IC+1][JC+1];
-
-            d[IC+2][JC+2] = const1 + const2 * RZIJ * RZIJ;
-
-            d[JC+2][IC+2] = d[IC+2][JC+2];
-
-            d[IC][JC+1] = const2 * RXIJ * RYIJ;
-
-            d[JC+1][IC] = d[IC][JC+1];
-
-            d[IC][JC+2] = const2 * RXIJ * RZIJ;
-
-            d[JC+2][IC] = d[IC][JC+2];
-
-            d[IC+1][JC+2] = const2 * RYIJ * RZIJ;
-
-            d[JC+2][IC+1] = d[IC+1][JC+2];
-
-            //mixed and rotational part
-
-            IC6 = 6 * i;
-
-            JC6 = 6 * j;
+            JC6 = 3 * N + JC;
 
             double XIJ_hat = RXIJ/RIJ;
 
@@ -181,11 +137,53 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
             rr[2][2] = ZIJ_hat * ZIJ_hat;
 
-            levi_civita[0][1] = ZIJ_hat;
+            #ifdef OSEEN
+
+            for (std::size_t a = 0; a < 3; a++){
+
+                for (std::size_t b = 0; b < 3; b++){
+
+                    //unit matrix values
+                    I = (a == b) ? 1.0 : 0.0;
+
+                    //tt
+                    d[IC + a][JC + b] = cons_tr[i] * (p1/RIJ) * (I + rr[a][b]);
+
+                    d[JC + b][IC + a] = d[IC + a][JC + b];                
+
+                    //rr
+                    d[IC6 + a][JC6 + b] = 0.0;
+
+                    d[JC6 + b][IC6 + a] = 0.0;
+
+                    //rt
+                    d[IC6 + a][JC + b] = 0.0;
+
+                    d[JC6 + b][IC + a] = 0.0;
+
+                    //tr
+                    d[IC + a][JC6 + b] = 0.0;
+
+                    d[JC + b][IC6 + a] = 0.0;
+
+                }
+            }
+
+            #else
+
+            for(std::size_t a = 0; a < 3; a++){
+
+                for(std::size_t b = 0; b < 3; b++){
+
+                    levi_civita[a][b] = 0.0;
+                }
+            }
+
+            levi_civita[0][1] = +ZIJ_hat;
 
             levi_civita[0][2] = - YIJ_hat;
 
-            levi_civita[1][0] = - ZIJ_hat;
+            levi_civita[1][0] = -ZIJ_hat;
 
             levi_civita[1][2] = XIJ_hat;
 
@@ -197,25 +195,33 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
                 for (std::size_t b = 0; b < 3; b++){
 
-                    //rr
-                    //a is particle radius => sigma/2
-                    d[IC6 + 3 + a][JC6 + 3 + b] =  - consij_rot[i] * (sigma/2)/RIJ * (sigma/2)/RIJ * (sigma/2)/RIJ * (((a == b) ? 1.0 : 0.0)- 3 * rr[a][b]);
+                    //unit matrix values
+                    I = (a == b) ? 1.0 : 0.0;
 
-                    d[JC6 + 3 + b][IC6 + 3 + a] = d[IC6 + 3 + a][JC6 + 3 + b];
+                    //tt
+                    d[IC + a][JC + b] = cons_tr[i] * (p2/RIJ3 * (I - 3 * rr[a][b]) + (p1/RIJ) * (I + rr[a][b]));
+
+                    d[JC + b][IC + a] = d[IC + a][JC + b];                
+
+                    //rr
+                    d[IC6 + a][JC6 + b] = -cons_rot[i] * p2/RIJ3 * (I - 3 * rr[a][b]);
+
+                    d[JC6 + b][IC6 + a] = d[IC6 + a][JC6 + b];
 
                     //rt
-                    d[IC6 + 3 + a][JC6 + b] = levi_civita[a][b] * consij_rot[i] * (sigma/2 * sigma/2 * sigma/2)/(RIJ * RIJ);
+                    d[IC6 + a][JC + b] = levi_civita[a][b] * cons_rot[i] * p3/(RIJ * RIJ);
 
-                    d[JC6 + 3 + a][IC6 + b] = - levi_civita[b][a] * consij_rot[i] * (sigma/2 * sigma/2 * sigma/2)/(RIJ * RIJ);
-
+                    d[JC6 + b][IC + a] = d[IC6 + a][JC + b];
 
                     //tr
-                    d[IC6 + a][JC6 + 3 + b] = d[IC6 + 3 + a][JC6 + b];
+                    d[IC + a][JC6 + b] = d[IC6 + a][JC + b];
 
-                    d[JC6 + a][IC6 + 3 + b] = d[JC6 + 3 + a][IC6 + b];
+                    d[JC + b][IC6 + a] = d[IC6 + a][JC + b];
 
                 }
             }
+
+            #endif
 
             if(RIJSQ < rcutsq){
 
@@ -277,49 +283,15 @@ void calc_forces(Data_task& data, const double sigma, const double rcut, const s
 
         data.forces[p][2] *= 48.0;
 
-        //Oseen has no rotations
         IC = 3 * p;
 
-        IC6 = 6 * p;
+        IC6 = 3 * N + IC;
 
-        d[IC][IC] = consii[p];
+        d[IC][IC] = d[IC + 1][IC + 1] = d[IC + 2][IC + 2] = cons_tr[p];
 
-        d[IC+1][IC+1] = consii[p];
-
-        d[IC+2][IC+2] = consii[p];
-
-        d[IC][IC+1] = 0.0; 
-
-        d[IC+1][IC] = d[IC][IC+1];
-        
-        d[IC][IC+2] = 0.0; 
-
-        d[IC+2][IC] = d[IC][IC+2];
-        
-        d[IC+1][IC+2] = 0.0;
-
-        d[IC+2][IC+1] = d[IC+1][IC+2];
-
-        d[IC6 + 3][IC6 + 3] = consii_rot[p];
-
-        d[IC6 + 4][IC6 + 4] = consii_rot[p];
-
-        d[IC6 + 5][IC6 + 5] = consii_rot[p];
-
-        d[IC6 + 3][IC6 + 4] = 0.0;
-
-        d[IC6 + 3][IC6 + 5] = 0.0;
-
-        d[IC6 + 4][IC6 + 3] = 0.0;
-
-        d[IC6 + 4][IC6 + 5] = 0.0;
-
-        d[IC6 + 5][IC6 + 3] = 0.0;
-
-        d[IC6 + 5][IC6 + 4] = 0.0;
-
+        d[IC6][IC6] = d[IC6 + 1][IC6 + 1] = d[IC6 + 2][IC6 + 2] = cons_rot[p];
+       
     };
-
 }
 
 void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT){

@@ -87,23 +87,15 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
 
     //no kT
 
-    std::vector<double> consij(N);
+    std::vector<double> cons_tr(N);
 
-    std::vector<double> consii(N);
-
-    std::vector<double> consij_rot(N);
-
-    std::vector<double> consii_rot(N);
+    std::vector<double> cons_rot(N);
 
     for(std::size_t i = 0; i < N; i++){
       
-      consij[i] = 3.0 / (8.0 * sigma * gamma_per_particle[i][0]);
-      
-      consii[i] = 1.0 / gamma_per_particle[i][0];
+      cons_tr[i] = 1.0 /gamma_per_particle[i][0];
 
-      consij_rot[i] = - 0.5 * 1.0 / gamma_per_particle_rot[i][0];
-      
-      consii_rot[i] = 1.0 / gamma_per_particle_rot[i][0];
+      cons_rot[i] = 1.0 / gamma_per_particle_rot[i][0];
 
     }
 
@@ -127,7 +119,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
         ++counter_1;
     }
     
-    calc_forces(data, sigma, rcut, consii, consij, consii_rot, consij_rot);
+    calc_forces(data, sigma, rcut, cons_tr, cons_rot);
 
     if(temp > 0.0){
 
