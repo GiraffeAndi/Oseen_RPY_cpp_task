@@ -40,122 +40,119 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     const std::size_t N = particles.size();
 
     Data_task data(N);
-
-	  //not sure about this, can be changed
     data.dt = time_step;
+    //Temperature in units of kT
+    //double temp = kT; //no kT for now
 
     std::vector<Thermostat::GammaType> gamma_per_particle(N), gamma_per_particle_rot(N);
 
     std::size_t i = 0;
 
-    for(auto &p : particles){
+    for (auto &p : particles){
 
- #ifdef THERMOSTAT_PER_PARTICLE
+    #ifdef THERMOSTAT_PER_PARTICLE
 
       auto gamma = p.gamma();
-
       auto gamma_rot = p.gamma_rot();
-    
+  
       if (gamma >= Thermostat::GammaType{}) {
 
     #ifdef PARTICLE_ANISOTROPY
           
-        gamma_per_particle[i] = Thermostat::GammaType{gamma[0], gamma[0], gamma[0]};  //we asssume hydrodynamically isotropic particles gamma x = gamma y = gamma z;
+        gamma_per_particle[i][0] = gamma[0];
+        gamma_per_particle[i][1] = gamma[0];
+        gamma_per_particle[i][2] = gamma[0];
+        //we asssume hydrodynamically isotropic particles gamma x = gamma y = gamma z;
 
-        gamma_per_particle_rot[i] = Thermostat::GammaType{gamma_rot[0], gamma_rot[0], gamma_rot[0]};
+        gamma_per_particle_rot[i][0] = gamma_rot[0];
+        gamma_per_particle_rot[i][1] = gamma_rot[0];
+        gamma_per_particle_rot[i][2] = gamma_rot[0];
 
     #else
         gamma_per_particle[i] = gamma;
-
         gamma_per_particle_rot[i] = gamma_rot;
 
-    #endif
+    #endif //PARTICLE_ANISOTROPY
     
       } else
- #endif
+    #endif //THERMOSTAT_PER_PARTICLE
       {
         gamma_per_particle[i] = brownian_gamma;
-
         gamma_per_particle_rot[i] = brownian_gamma_rotation;
       }
 
       i++;
     }
 
-    //chosen with help from LJ potential in User guide.
-    const double rcut = std::pow(2.0, 1.0/6.0) * sigma;
-
-    //no kT
-
     std::vector<double> cons_tr(N);
-
     std::vector<double> cons_rot(N);
 
     for(std::size_t i = 0; i < N; i++){
-      
-      cons_tr[i] = 1.0 /gamma_per_particle[i][0];
 
+      cons_tr[i] = 1.0 /gamma_per_particle[i][0];
       cons_rot[i] = 1.0 / gamma_per_particle_rot[i][0];
 
     }
-
-    //Temperature in units of kT
-    double temp = kT;
-
-    //new way of indexing old one did not work
-    int counter_1 = 0;
+    
+    std::size_t u = 0;
 
     for(auto &p : particles){
 
-        //x-coordinates
-        data.positions[counter_1][0] = p.pos()[0];
-        
-        //y-coordinates
-        data.positions[counter_1][1] = p.pos()[1];
+      auto i3 = 3*u;
+      auto i6 = 3*N + i3;
+      auto i6fr = 6*u;
 
-        //z-coordinates
-        data.positions[counter_1][2] = p.pos()[2];
+      //conservative forces
+      auto f = p.force();
+      data.forces[i3] = f[0];
+      data.forces[i3 + 1] = f[1];
+      data.forces[i3 + 2] = f[2];
 
-        ++counter_1;
+      //torques
+      auto t = p.torque();
+      data.forces[i6] = t[0];
+      data.forces[i6 + 1] = t[1];
+      data.forces[i6 + 2] = t[2];
+
+      //positions
+      auto pos = p.pos();
+      //x-coordinates
+      data.positions[i6fr] = pos[0];
+      //y-coordinates
+      data.positions[i6fr + 1] = pos[1];
+      //z-coordinates
+      data.positions[i6fr + 2] = pos[2];
+
+      u++;
     }
     
-    calc_forces(data, sigma, rcut, cons_tr, cons_rot);
+    calc_mobility_matrix(data, sigma, cons_tr, cons_rot);
+    calc_velocities(data);
 
-    if(temp > 0.0){
-
-      covar(data, time_step, brownian, kT);
-
-      move(data, time_step);
-
-    }
-    
-    else{
-
-      move(data, time_step);
-      
-    }
-
-    
-    //new way of indexing
-    int counter_2 = 0;
+    std::size_t q = 0;
 
     for(auto &p : particles){
-                    p.pos()[0] = data.positions[counter_2][0];
 
-                    p.pos()[1] = data.positions[counter_2][1];
+      auto i3 = 3*q;
+      auto i6 = 3*N + i3;
 
-                    p.pos()[2] = data.positions[counter_2][2];
+      //writing linear velocities back
+      p.v()[0] = data.velocities[i3];
+      p.v()[1] = data.velocities[i3 + 1];
+      p.v()[2] = data.velocities[i3 + 2];
 
-                    ++counter_2;
+      //writing angular velocities back
+      p.omega()[0] = data.velocities[i6];
+      p.omega()[1] = data.velocities[i6 + 1];
+      p.omega()[2] = data.velocities[i6 + 2];
 
-                }
+      q++;
+    }
+
 
 #endif //OSEEN_RPY                
 }
-
-              
-
-
+     
 /** Determine position: viscous drag driven by conservative forces.
  *  From eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma

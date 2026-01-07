@@ -31,11 +31,31 @@
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma){
 
-
 #ifdef OSEEN_RPY
 
-//virtual states?
-      bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma, brownian.gamma_rotation);
+    bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma, brownian.gamma_rotation);
+
+    for (auto &p : particles){
+      
+      if (!p.is_virtual() or thermo_virtual){
+        
+        p.pos() += p.v() * time_step;
+
+      #ifdef ROTATION
+
+      // Perform rotation
+      auto const norm = p.omega().norm();
+
+      if (norm != 0.) {
+        
+        auto const omega_unit = (1. / norm) * p.omega();
+        local_rotate_particle(p, omega_unit, norm * time_step);
+
+      }
+      
+      #endif // ROTATION
+      }
+    }
 
 #else
 
@@ -49,7 +69,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.v() += bd_random_walk_vel(brownian, p);
 
 
-#ifdef ROTATION
+    #ifdef ROTATION
       if (!p.can_rotate())
         continue;
       convert_torque_to_body_frame_apply_fix(p);
@@ -57,7 +77,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, Par
       p.omega() = bd_drag_vel_rot(brownian.gamma_rotation, p);
       p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
       p.omega() += bd_random_walk_vel_rot(brownian, p);
-#endif // ROTATION
+    #endif // ROTATION
 
     }
   }

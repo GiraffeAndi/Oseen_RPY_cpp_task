@@ -22,7 +22,7 @@ json_path = os.path.join(res_path, f"trajectory_{sep}.json")
  
 fp = open(vtf_path, mode="w")
  
-system.time_step = 0.000001
+system.time_step = 0.0001
  
 """Have to set the skin manually"""
  
@@ -30,17 +30,22 @@ system.cell_system.skin = 0.1
  
 """Triangle Setup"""
  
-part1 = system.part.add(pos = [0.0, 0.0, 0.0], ext_force = [0.0, 0.0, 1.0])
+part1 = system.part.add(pos = [0.0, 0.0, 0.0], type = 0, ext_force = [0.0, 0.0, 1.0])
  
-part2 = system.part.add(pos = [sep, 0.0, 0.0], ext_force = [0.0, 0.0, 1.0])
+part2 = system.part.add(pos = [sep, 0.0, 0.0], type = 0, ext_force = [0.0, 0.0, 1.0])
  
-part3 = system.part.add(pos = [sep/2, (np.sqrt(3)/2) * sep, 0], ext_force = [0.0, 0.0, 1.0])
+part3 = system.part.add(pos = [sep/2, (np.sqrt(3)/2) * sep, 0], type = 0, ext_force = [0.0, 0.0, 1.0])
+
  
 """Setup for Brownian mechanics"""
  
 system.thermostat.set_brownian(kT = 0.0, gamma = 1.0, seed = 1)
  
 system.integrator.set_brownian_dynamics(4.0)
+
+wca = system.non_bonded_inter[0, 0]
+
+wca.wca.set_params(epsilon = 1.0, sigma = 4.0)
  
 """VTF and json Output"""
  
@@ -54,7 +59,7 @@ espressomd.io.writer.vtf.writevsf(system, fp)
  
 espressomd.io.writer.vtf.writevcf(system, fp)
  
-for i in range(150):
+for i in range(500):
  
  trajectory_part1.append([float(x) for x in part1.pos])
  
