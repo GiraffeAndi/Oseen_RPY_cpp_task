@@ -33,17 +33,65 @@
 
 #include <cmath>
 
-void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma, Thermostat::GammaType const &brownian_gamma, Thermostat::GammaType const &brownian_gamma_rotation){
+void thermal_noise(Data_task& data, double dt, BrownianThermostat const &brownian, double kT){
+  
+  const std::size_t N = data.positions.size()/6;
+  std::vector<std::vector<double>> L(6*N, std::vector<double>(6*N, 0.0));    
+
+  for(std::size_t i = 0; i < 6 * N; i++){
+    for(std::size_t j = 0; j <= i; j++){
+      
+      double sum = 0.0;
+      
+      for(std::size_t k = 0; k < j; k++){
+        sum += L[i][k] * L[j][k];
+      }
+      
+      if(i == j){
+        L[i][i] = std::sqrt(data.diffusion_tensor[i][i] - sum);
+      }
+      
+      else{
+        L[i][j] = (data.diffusion_tensor[i][j] - sum)/L[j][j];
+      }
+    }
+  }
+
+  std::vector<double> XI(6*N, 0.0);
+  auto random_number_seed = brownian.rng_seed();
+  auto counter = brownian.rng_counter();
+
+  for(std::size_t f = 0; f < N; f++){
+    
+    auto trans_noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(counter, random_number_seed, f);
+    for(std::size_t i = 0; i < 3; i++){
+      XI[3*f + i] = trans_noise[i] * std::sqrt(2.0 * dt * kT);
+    }
+
+    auto rot_noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(counter, random_number_seed, f);
+    for(std::size_t i = 0; i < 3; i++){
+      XI[3*N + 3*f + i] = rot_noise[i] * std::sqrt(2.0 * dt * kT);
+    }
+  }
+  
+  for(std::size_t k = 0; k < 6*N; k++){
+    double sum = 0.0;
+
+    for(std::size_t w = 0; w <= k; w++){
+      sum += L[k][w] * XI[w];
+    }
+    
+    data.CRND[k] = sum;
+  }
+}
+
+Data_task bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particles, const double dt, const double kT, const double sigma, Thermostat::GammaType const &brownian_gamma, Thermostat::GammaType const &brownian_gamma_rotation){
 
 #ifdef OSEEN_RPY
 
     const std::size_t N = particles.size();
 
     Data_task data(N);
-    data.dt = time_step;
-    //Temperature in units of kT
-    //double temp = kT; //no kT for now
-
     std::vector<Thermostat::GammaType> gamma_per_particle(N), gamma_per_particle_rot(N);
 
     std::size_t i = 0;
@@ -129,6 +177,10 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
     calc_mobility_matrix(data, sigma, cons_tr, cons_rot);
     calc_velocities(data);
 
+    if(kT != 0.0){
+      thermal_noise(data, dt, brownian, kT);
+    }
+
     std::size_t q = 0;
 
     for(auto &p : particles){
@@ -149,6 +201,7 @@ void bd_hydrodynamics(BrownianThermostat const &brownian, ParticleRange &particl
       q++;
     }
 
+    return data;
 
 #endif //OSEEN_RPY                
 }
@@ -361,6 +414,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
   }
   return velocity;
 }
+
 
 #ifdef ROTATION
 

@@ -221,72 +221,13 @@ void calc_mobility_matrix(Data_task& data, const double sigma, const std::vector
 
     #endif
 
-
-}
-
-void covar(Data_task& data, double dt, BrownianThermostat const &brownian, double kT){
-
-    const std::size_t N = data.positions.size()/6;
-    
-    std::vector<std::vector<double>> L;
-    std::vector<double> XI(6 * N, 0.0);
-    L.resize(6*N, std::vector<double>(6*N, 0.0));
-    
-
-    for(std::size_t i = 0; i < 6 * N; i++){
-
-        for(std::size_t j = 0; j <= i; j++){
-
-            double sum = 0.0;
-
-            for(std::size_t k = 0; k < j; k++){
-
-                sum += L[i][k] * L[j][k];
-            }
-            
-            if(i == j){
-
-            L[i][i] = std::sqrt(data.diffusion_tensor[i][i] - sum);
-
-            }
-
-            else{
-
-            L[i][j] = (data.diffusion_tensor[i][j] - sum)/L[j][j];
-
-            }
-        }
-    }
-
-    //logic taken from bd_random_walk in the ./thermostats/brownian_inline.hpp file
-    auto random_number_seed = brownian.rng_seed();
-    auto counter = brownian.rng_counter();
-
-    for(std::size_t f = 0; f < 6 * N; f++){
-
-        //ndrn = normally distributed random number
-        //used template from random.hpp instead of seperate gauss function
-        //changing the key every loop with loop index to provide different noise
-        double ndrn = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(counter, random_number_seed, f)[0];
-        XI[f] = ndrn * std::sqrt(2.0 * dt * kT);
-        double sum = 0.0;
-
-        for(std::size_t w = 0; w <= f; w++){
-
-            sum += L[f][w] * XI[w];
-        }
-
-        data.CRND[f] = sum;
-
-    }
-
 }
 
 void calc_velocities(Data_task& data){
-
+    
     const std::size_t N = data.positions.size()/6;
-
-   for(std::size_t f = 0; f < N; f++){
+    
+    for(std::size_t f = 0; f < N; f++){
         
         auto f6 = 6*f;
 
@@ -300,4 +241,6 @@ void calc_velocities(Data_task& data){
             }
         }
     }
+
+    dump_velocity_vector(data.velocities);
 }

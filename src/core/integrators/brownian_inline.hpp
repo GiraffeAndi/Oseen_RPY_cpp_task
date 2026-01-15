@@ -29,32 +29,43 @@
 #include "thermostat.hpp"
 #include "thermostats/brownian_inline.hpp"
 
-inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, double time_step, double kT, double sigma){
+inline void brownian_dynamics_propagator(BrownianThermostat const &brownian, ParticleRange &particles, const double time_step, const double kT, const double sigma){
 
 #ifdef OSEEN_RPY
-
-    bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma, brownian.gamma_rotation);
-
+    auto data = bd_hydrodynamics(brownian, particles, time_step, kT, sigma, brownian.gamma, brownian.gamma_rotation);
+    std::size_t i = 0;
+    const std::size_t N = particles.size();
+    
     for (auto &p : particles){
-      
       if (!p.is_virtual() or thermo_virtual){
-        
         p.pos() += p.v() * time_step;
+        
+        //thermal noise
+        if(kT != 0.0){
+          p.pos() += Utils::Vector3d{data.CRND[3*i + 0], data.CRND[3*i + 1], data.CRND[3*i + 2]};
+        }
 
       #ifdef ROTATION
-
       // Perform rotation
       auto const norm = p.omega().norm();
-
       if (norm != 0.) {
-        
         auto const omega_unit = (1. / norm) * p.omega();
         local_rotate_particle(p, omega_unit, norm * time_step);
-
       }
-      
+
+      if(kT != 0.0){
+        Utils::Vector3d dphi = {data.CRND[3*N + 3*i + 0], data.CRND[3*N + 3*i + 1], data.CRND[3*N + 3*i + 2]};
+        
+        auto const dphi_norm = dphi.norm();
+        if (dphi_norm != 0.){
+          auto const dphi_u = dphi / dphi_norm;
+          p.quat() = local_rotate_particle_body(p, dphi_u, dphi_norm);
+        }
+      }
       #endif // ROTATION
       }
+
+      i++;
     }
 
 #else
