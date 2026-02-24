@@ -221,7 +221,7 @@ void calc_mobility_matrix(Data_task& data, const double sigma, const std::vector
 
     #endif
 
-    dump_diffusion_tensor(d);
+    //dump_diffusion_tensor(d);
 
 }
 
@@ -244,5 +244,5 @@ void calc_velocities(Data_task& data){
         }
     }
 
-    dump_velocity_vector(data.velocities);
+    //dump_velocity_vector(data.velocities);
 }

@@ -5,7 +5,7 @@ import json
 import os
 import vtf
  
-system = espressomd.System(box_l = [20.0, 20.0, 20.0], periodicity=[False, False, False])
+system = espressomd.System(box_l = [100.0, 100.0, 100.0], periodicity=[False, False, False])
  
 print("Please enter the desired separation in particle diameter(s) (sigma) between the particles.")
  
