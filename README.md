@@ -1,5 +1,4 @@
 # Custom implementation of the Oseen and Rotne-Prager-Yamakawa method into the framework of ESPResSo
-WELCOME!\\
 This work represents an extension of the Extensible Simulation Package for Research on Soft Matter Systems (ESPResSo). The [user guide](https://espressomd.github.io/doc/index.html) of ESPResSo will walk you through the basic usage of ESPResSo.
 
 Users of this custom implementation have to be aware of modification to the UI in regards to the Brownian dynamics routine of ESPResSo.
