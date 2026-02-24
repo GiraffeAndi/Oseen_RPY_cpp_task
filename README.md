@@ -1,2 +1,2 @@
 # Oseen_RPY_cpp_task
-Oseen/RPY implementation for my Task
+Oseen/RPY implementation into ESPResSo
